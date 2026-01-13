@@ -10,9 +10,6 @@ public:
   void process(juce::AudioBuffer<float>& buffer) noexcept {
     // for each frame
     for (const auto frameIndex : std::views::iota(0, buffer.getNumSamples())) {
-      // TODO: generate the LFO value
-
-      // TODO: calculate the modulation value
 
       // for each channel sample in the frame
       for (const auto channelIndex :
@@ -20,8 +17,8 @@ public:
         // get the input sample
         const auto inputSample = buffer.getSample(channelIndex, frameIndex);
 
-        // TODO: modulate the sample
-        const auto outputSample = inputSample;
+        // for the tanh function:
+        const auto outputSample = std::tanh(distK*inputSample);
 
         // set the output sample
         buffer.setSample(channelIndex, frameIndex, outputSample);
@@ -32,6 +29,8 @@ public:
   void reset() noexcept {}
 
 private:
-  // You should put class members and private functions here
+
+  // PARAMETERS:
+  float distK = 6.0f; // should be 1-10, maybe 1-15?
 };
 }  // namespace distortion
