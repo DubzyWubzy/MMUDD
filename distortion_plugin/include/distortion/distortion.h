@@ -3,8 +3,34 @@
 namespace distortion {
 class distortion {
 public:
+  enum class DistType : size_t {
+    soft = 0,
+    hard = 1
+  };
+
+
   void prepare(double sampleRate, int expectedMaxFramesPerBlock) {
     juce::ignoreUnused(sampleRate, expectedMaxFramesPerBlock);
+  }
+
+  float getDistortedSample(const float inputSample) {
+    // TODO: either make this a switch or otherwise make it pretty
+    if (currentType == DistType::soft) {
+      // for the soft tanh function:
+      return std::tanh(distK*inputSample);
+    }
+
+    else if (currentType == DistType::hard) {
+      if (inputSample > tauThresh) {
+        return tauThresh;
+      } else if (inputSample < (tauThresh - 2 * tauThresh)) {
+        return (tauThresh - 2 * tauThresh);
+      } else {
+        return inputSample;
+      }
+    } else {
+      return inputSample;
+    }
   }
 
   void process(juce::AudioBuffer<float>& buffer) noexcept {
@@ -17,8 +43,8 @@ public:
         // get the input sample
         const auto inputSample = buffer.getSample(channelIndex, frameIndex);
 
-        // for the tanh function:
-        const auto outputSample = std::tanh(distK*inputSample);
+        auto outputSample = getDistortedSample(inputSample);
+
 
         // set the output sample
         buffer.setSample(channelIndex, frameIndex, outputSample);
@@ -31,6 +57,9 @@ public:
 private:
 
   // PARAMETERS:
+  DistType currentType = DistType::hard;
+
   float distK = 6.0f; // should be 1-10, maybe 1-15?
+  float tauThresh = 0.5f; // -1 to 1 mayhaps?
 };
 }  // namespace distortion
